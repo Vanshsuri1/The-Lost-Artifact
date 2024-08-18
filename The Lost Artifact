@@ -1,0 +1,424 @@
+import java.util.Scanner;
+import java.util.Random;
+
+/**
+ * Quest for the Lost Artifact
+ * 
+ * This is a simple text-based adventure game where the player, Arin, embarks on a quest to find a powerful artifact.
+ * The player moves through various locations on a map, interacts with shops, encounters challenges, and fights a boss.
+ * The game includes a dice rolling mechanic , item usage, and a shop system.
+ */
+public class QuestForTheLostArtifact_VanshS {
+    public static Scanner sc = new Scanner(System.in);
+    public static Random random = new Random();
+    public static boolean gameRunning = true;
+    public static int playerPosition = 0;
+    public static int coins = 20;
+    public static int health = 100;
+    public static int armor = 0;
+    public static int[] items = {0, 0, 0, 0, 0, 0}; // [Healing Potion, Strength Potion, Magic Scroll, Double Dice, Mystical Dice, Move Reset]
+    public static char[] map = new char[100]; // Reduced the map size for simplicity
+    public static char PLAYER_ICON = 'P';
+    public static char EMPTY_ICON = '-';
+    public static char SHOP_ICON = 'S';
+    public static char LUCKY_ICON = 'L';
+    public static char RED_ICON = 'R';
+    public static char CHALLENGE_ICON = 'C';
+    public static String[] board = {
+        "Mystical Plains", "Enchanted Woods", "Green", "Guardian's Bridge", "Green",
+        "Abandoned Village", "Green", "Shop", "Dragon's Lair", "Red",
+        "Enchanted Woods", "Green", "Guardian's Bridge", "Green", "Abandoned Village",
+        "Green", "Shop", "Dragon's Lair", "Red", "Boss Fight",
+        "Enchanted Woods", "Green", "Guardian's Bridge", "Green", "Abandoned Village",
+        "Green", "Shop", "Dragon's Lair", "Red", "Enchanted Woods",
+        "Green", "Guardian's Bridge", "Green", "Abandoned Village", "Green",
+        "Shop", "Dragon's Lair", "Red", "Enchanted Woods", "Green",
+        "Guardian's Bridge", "Green", "Abandoned Village", "Green", "Shop",
+        "Dragon's Lair", "Red", "Enchanted Woods", "Green", "Guardian's Bridge",
+        "Green", "Abandoned Village", "Green", "Shop", "Dragon's Lair",
+        "Red", "Enchanted Woods", "Green", "Guardian's Bridge", "Green",
+        "Abandoned Village", "Green", "Shop", "Dragon's Lair", "Red",
+        "Enchanted Woods", "Green", "Guardian's Bridge", "Green", "Abandoned Village",
+        "Green", "Shop", "Dragon's Lair", "Red", "Boss Fight",
+    };
+
+    // Move set for Arin
+    public static String[] moveNames = {"Slash", "Fireball", "Heal", "Thunder Strike"};
+    public static int[] moveCharges = {10, 5, 3, 2};
+    public static int[] moveDamages = {15, 30, -20, 50};
+
+    public static void main(String[] args) {
+        initializeMap();
+        smoothPrint("Welcome to 'Quest for the Lost Artifact'!");
+        smoothPrint("You are Arin, a young adventurer on a quest to find a powerful artifact.");
+        smoothPrint("Let's begin your journey!");
+
+        while (gameRunning) {
+            displayMap();
+            displayMenu();
+            String input = sc.nextLine();
+            handleChoice(input);
+        }
+    }
+
+    // Initializes the game map with different icons representing various locations
+    public static void initializeMap() {
+        for (int i = 0; i < map.length; i++) {
+            if (i == 7 || i == 16 || i == 28 || i == 37 || i == 49 || i == 58 || i == 69 || i == 78 || i == 89) {
+                map[i] = SHOP_ICON;
+            } else if (i % 5 == 0 && i != 0) {
+                map[i] = LUCKY_ICON;
+            } else if (i % 8 == 0 && i != 0) {
+                map[i] = RED_ICON;
+            } else if (i % 10 == 0 && i != 0) {
+                map[i] = CHALLENGE_ICON;
+            } else {
+                map[i] = EMPTY_ICON;
+            }
+        }
+        map[playerPosition] = PLAYER_ICON;
+    }
+
+    // Smooth print method for a better user experience
+    public static void smoothPrint(String message) {
+        for (char c : message.toCharArray()) {
+            System.out.print(c);
+            try {
+                Thread.sleep(50); // Adjust delay as needed
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println();
+    }
+
+    // Displays the map with the player's current position
+    public static void displayMap() {
+        System.out.println("\nMap:");
+        for (int i = 0; i < map.length; i++) {
+            if (i == playerPosition) {
+                System.out.print("[" + PLAYER_ICON + "] ");
+            } else {
+                System.out.print("[" + map[i] + "] ");
+            }
+            if ((i + 1) % 10 == 0) {
+                System.out.println();
+            }
+        }
+    }
+
+    // Displays the main menu
+    public static void displayMenu() {
+        System.out.println("\nWhat would you like to do?");
+        System.out.println("1. Roll Dice");
+        System.out.println("2. Use Item");
+        System.out.println("3. View Inventory");
+        System.out.println("4. Visit Shop");
+        System.out.println("5. View Stats");
+        System.out.println("6. Exit Game");
+    }
+
+    // Handles the choice input by the user
+    public static void handleChoice(String choice) {
+        switch (choice) {
+            case "1":
+                rollDice();
+                break;
+            case "2":
+                useItemMenu();
+                break;
+            case "3":
+                viewInventory();
+                break;
+            case "4":
+                visitShop();
+                break;
+            case "5":
+                displayStatus();
+                break;
+            case "6":
+                exitGame();
+                break;
+            default:
+                smoothPrint("Invalid choice. Please try again.");
+        }
+    }
+
+    // Overloaded method for rolling a single dice
+    public static void rollDice() {
+        rollDice(1);
+    }
+
+    // Overloaded method for rolling multiple dice
+    public static void rollDice(int diceCount) {
+        int totalMove = 0;
+        for (int i = 0; i < diceCount; i++) {
+            int diceRoll = random.nextInt(6) + 1;
+            totalMove += diceRoll;
+            System.out.println("\nYou rolled a " + diceRoll + "!");
+        }
+        playerPosition = (playerPosition + totalMove) % board.length;
+        smoothPrint("You move to position " + playerPosition + " (" + board[playerPosition] + ")");
+        handlePosition();
+    }
+
+    // Displays the player's current stats
+    public static void displayStatus() {
+        System.out.println("\nCurrent Position: " + playerPosition + " (" + board[playerPosition] + ")");
+        System.out.println("Coins: " + coins);
+        System.out.println("Health: " + health + "/100");
+        System.out.println("Armor: " + armor);
+        System.out.println("Items: Healing Potion (" + items[0] + "), Strength Potion (" + items[1] + "), Magic Scroll (" + items[2] + "), Double Dice (" + items[3] + "), Mystical Dice (" + items[4] + "), Move Reset (" + items[5] + ")");
+        System.out.println("Moves: ");
+        for (int i = 0; i < moveNames.length; i++) {
+            System.out.println(moveNames[i] + " (Charges: " + moveCharges[i] + ", Damage: " + (moveDamages[i] < 0 ? "Healing " : "") + Math.abs(moveDamages[i]) + ")");
+        }
+    }
+
+    // Handles the player's position on the map
+    public static void handlePosition() {
+        switch (board[playerPosition]) {
+            case "Red":
+                coins -= 10;
+                smoothPrint("Oh no! You landed on a red square and lost 10 coins.");
+                break;
+            case "Green":
+                coins += 10;
+                smoothPrint("Great! You landed on a green square and gained 10 coins.");
+                break;
+            case "Shop":
+                visitShop();
+                break;
+            case "Boss Fight":
+                bossFight();
+                break;
+            default:
+                handleLocation(board[playerPosition]);
+                break;
+        }
+    }
+
+    // Displays the item usage menu
+    public static void useItemMenu() {
+        System.out.println("\nWhich item would you like to use?");
+        System.out.println("1. Healing Potion");
+        System.out.println("2. Strength Potion");
+        System.out.println("3. Magic Scroll");
+        System.out.println("4. Double Dice");
+        System.out.println("5. Mystical Dice");
+        System.out.println("6. Move Reset");
+        System.out.println("7. Go Back");
+
+        String choice = sc.nextLine();
+        switch (choice) {
+            case "1":
+                useItem(0);
+                break;
+            case "2":
+                useItem(1);
+                break;
+            case "3":
+                useItem(2);
+                break;
+            case "4":
+                useItem(3);
+                break;
+            case "5":
+                useItem(4);
+                break;
+            case "6":
+                useItem(5);
+                break;
+            case "7":
+                break;
+            default:
+                smoothPrint("Invalid choice. Please try again.");
+        }
+    }
+
+    // Uses the specified item
+    public static void useItem(int itemIndex) {
+        if (items[itemIndex] > 0) {
+            items[itemIndex]--;
+            switch (itemIndex) {
+                case 0:
+                    health = Math.min(health + 30, 100);
+                    smoothPrint("You used a Healing Potion and restored 30 health points.");
+                    break;
+                case 1:
+                    smoothPrint("You used a Strength Potion. Your attacks will be more powerful for the next fight.");
+                    break;
+                case 2:
+                    smoothPrint("You used a Magic Scroll. You feel a surge of magical energy.");
+                    break;
+                case 3:
+                    smoothPrint("You used a Double Dice item. You can roll two dice for your next move.");
+                    rollDice(2);
+                    break;
+                case 4:
+                    smoothPrint("You used a Mystical Dice item. You can roll a mystical dice (1-12) for your next move.");
+                    int mysticalDiceRoll = random.nextInt(12) + 1;
+                    playerPosition = (playerPosition + mysticalDiceRoll) % board.length;
+                    smoothPrint("You rolled a " + mysticalDiceRoll + "! You move to position " + playerPosition + " (" + board[playerPosition] + ")");
+                    handlePosition();
+                    break;
+                case 5:
+                    playerPosition = 0;
+                    smoothPrint("You used a Move Reset item. You are back at the starting point.");
+                    break;
+                default:
+                    smoothPrint("Invalid item.");
+            }
+        } else {
+            smoothPrint("You don't have this item.");
+        }
+    }
+
+    // Views the player's inventory
+    public static void viewInventory() {
+        System.out.println("\nInventory:");
+        System.out.println("1. Healing Potion: " + items[0]);
+        System.out.println("2. Strength Potion: " + items[1]);
+        System.out.println("3. Magic Scroll: " + items[2]);
+        System.out.println("4. Double Dice: " + items[3]);
+        System.out.println("5. Mystical Dice: " + items[4]);
+        System.out.println("6. Move Reset: " + items[5]);
+    }
+
+    // Visits the shop
+    public static void visitShop() {
+        smoothPrint("Welcome to the shop! You can buy items here.");
+        System.out.println("Items available for purchase:");
+        System.out.println("1. Healing Potion (10 coins)");
+        System.out.println("2. Strength Potion (15 coins)");
+        System.out.println("3. Magic Scroll (20 coins)");
+        System.out.println("4. Double Dice (5 coins)");
+        System.out.println("5. Mystical Dice (10 coins)");
+        System.out.println("6. Move Reset (5 coins)");
+        System.out.println("7. Leave Shop");
+
+        String choice = sc.nextLine();
+        switch (choice) {
+            case "1":
+                buyItem(0, 10);
+                break;
+            case "2":
+                buyItem(1, 15);
+                break;
+            case "3":
+                buyItem(2, 20);
+                break;
+            case "4":
+                buyItem(3, 5);
+                break;
+            case "5":
+                buyItem(4, 10);
+                break;
+            case "6":
+                buyItem(5, 5);
+                break;
+            case "7":
+                smoothPrint("Thank you for visiting the shop. Come again soon!");
+                break;
+            default:
+                smoothPrint("Invalid choice. Please try again.");
+        }
+    }
+
+    // Buys the specified item if the player has enough coins
+    public static void buyItem(int itemIndex, int cost) {
+        if (coins >= cost) {
+            items[itemIndex]++;
+            coins -= cost;
+            smoothPrint("You bought the item.");
+        } else {
+            smoothPrint("You don't have enough coins to buy this item.");
+        }
+    }
+
+    // Handles special locations
+    public static void handleLocation(String location) {
+        smoothPrint("You arrived at " + location + ".");
+        if (location.equals("Mystical Plains")) {
+            smoothPrint("You find a mystical scroll on the ground.");
+            items[2]++;
+        } else if (location.equals("Enchanted Woods")) {
+            smoothPrint("You encounter a friendly fairy who heals you.");
+            health = Math.min(health + 10, 100);
+        } else if (location.equals("Guardian's Bridge")) {
+            smoothPrint("You cross a sturdy bridge guarded by a helpful knight.");
+        } else if (location.equals("Abandoned Village")) {
+            smoothPrint("You find some coins in the ruins of the village.");
+            coins += 5;
+        } else if (location.equals("Dragon's Lair")) {
+            smoothPrint("A fierce dragon challenges you to a battle!");
+            if (fightDragon()) {
+                smoothPrint("You defeated the dragon!");
+            } else {
+                smoothPrint("You were defeated by the dragon. Game over.");
+                gameRunning = false;
+            }
+        }
+    }
+
+    // Boss fight logic
+    public static void bossFight() {
+        smoothPrint("You have reached the final battle! The boss awaits you.");
+        if (fightBoss()) {
+            smoothPrint("Congratulations! You have defeated the boss and obtained the powerful artifact!");
+            gameRunning = false;
+        } else {
+            smoothPrint("You were defeated by the boss. Game over.");
+            gameRunning = false;
+        }
+    }
+
+    // Fighting a dragon
+    public static boolean fightDragon() {
+        return fight(100, 25); // Dragon has 100 HP and deals 25 damage
+    }
+
+    // Fighting the boss
+    public static boolean fightBoss() {
+        return fight(200, 40); // Boss has 200 HP and deals 40 damage
+    }
+
+    // Fight logic
+    public static boolean fight(int enemyHealth, int enemyDamage) {
+        while (health > 0 && enemyHealth > 0) {
+            System.out.println("\nChoose your move:");
+            for (int i = 0; i < moveNames.length; i++) {
+                System.out.println((i + 1) + ". " + moveNames[i] + " (Charges left: " + moveCharges[i] + ")");
+            }
+            String moveChoice = sc.nextLine();
+            int moveIndex = Integer.parseInt(moveChoice) - 1;
+
+            if (moveCharges[moveIndex] > 0) {
+                moveCharges[moveIndex]--;
+                int damage = moveDamages[moveIndex];
+                if (damage < 0) {
+                    health = Math.min(health - damage, 100); // Healing
+                    smoothPrint("You used " + moveNames[moveIndex] + " and healed " + (-damage) + " health points.");
+                } else {
+                    enemyHealth -= damage;
+                    smoothPrint("You used " + moveNames[moveIndex] + " and dealt " + damage + " damage.");
+                }
+            } else {
+                smoothPrint("You don't have enough charges left for this move.");
+                continue;
+            }
+
+            if (enemyHealth > 0) {
+                health -= Math.max(0, enemyDamage - armor); // Armor reduces incoming damage
+                smoothPrint("The enemy attacks and deals " + enemyDamage + " damage.");
+            }
+        }
+        return health > 0;
+    }
+
+    // Exits the game
+    public static void exitGame() {
+        smoothPrint("Thank you for playing 'Quest for the Lost Artifact'!");
+        gameRunning = false;
+    }
+}
